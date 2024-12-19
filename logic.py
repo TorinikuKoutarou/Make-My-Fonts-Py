@@ -180,7 +180,7 @@ def send_to_python_script(script,data):
 
 
 
-root = tkinter.Tk()
+root = tk.Tk()
 root.title(u"Make-My-Font-py")
 root.geometry("1000x800")
 
