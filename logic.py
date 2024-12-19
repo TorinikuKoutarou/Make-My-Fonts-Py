@@ -1,6 +1,11 @@
 import sys
-import tkinter
+import os
+import tkinter as tk
 import numpy as np
+import json
+
+import save_data
+import plot
 
 
 # 初期化
@@ -87,9 +92,88 @@ def averaging_all_x_y_a_b():
     ave_x_a_b = _ave_x_a_b
     ave_y_a_b = _ave_y_a_b
 
+def draw_view_canvas(ctx,x_y,canvas):
+    ctx.set_fill_style("#000000")
+    pen_size = 0.8
+    if canvas.width >= 300:
+        pen_size = 3
+
+    for i in range(len(x_y[0])):
+        for j in range(len(x_y[0][i])):
+            ctx.fill_rect(((canvas.width)* x_y[0][i][j])/400,
+                          canvas.width * (400 - x_y[1][i][j])/400,
+                            pen_size,
+                            pen_size)
+
+# 点を減らし、線でつなぐ方法 
+"""     for i in range(len(x_y[0])):
+        for j in range(len(x_y[0][i]) - 1):
+            ctx.begin_path() ctx.move_to((canvas.width * x_y[0][i][j])/400,
+                                           canvas.width * (400 - x_y[1][i][j])/400)
+            ctx.line_to((canvas.width * x_y[0][i][j + 1])/400,
+                          canvas.width * (400 - x_y[1][i][j + 1])/400) 
+            ctx.close_path() 
+            ctx.stroke()
+""" 
+def init_canvas(cv, cx):
+    cx.set_fill_style('#f0f5f9')
+    cx.fill_rect(0, 0, cv.width, cv.height)
+    grid_num = 20 * 2 
+    margin = cv.height/(grid_num - 2) / 2 
+    cx.set_stroke_style("#a7c1d6") 
+
+    for i in range(0, grid_num, 2): 
+        cx.begin_path() 
+        cx.move_to(cv.width/2, cv.height/grid_num * i + margin) 
+        cx.line_to(cv.width/2, cv.height/grid_num * (i + 1) + margin) 
+        cx.close_path() 
+        cx.stroke() 
+    for i in range(0, grid_num, 2):
+        cx.begin_path()
+        cx.move_to(cv.width/grid_num * i + margin, cv.height/2)
+        cx.line_to(cv.width/grid_num * (i + 1) + margin, cv.height/2)
+        cx.close_path()
+        cx.stroke()
+
+def plot(x_a_b, y_a_b, ctx, canvas):
+    ave_x_y = [] 
+    x_y_a_b = { "x": x_a_b, "y": y_a_b, "point_nums": point_nums }
+    x_y_a_b_json_str = json.dumps(x_y_a_b)
+    data = send_to_python_script('plot.py', x_y_a_b_json_str)
+    ave_x_y.append(data['x'])
+    ave_x_y.append(data['y'])
+    draw_view_canvas(ctx, ave_x_y, canvas)
+
+def view_plot(x_a_b, y_a_b, ctx, canvas):
+    view_x_y = [] 
+    x_y_a_b = { "x": x_a_b, "y": y_a_b, "point_nums": point_nums }
+    x_y_a_b_json_str = json.dumps(x_y_a_b) 
+    data = send_to_python_script('plot.py', x_y_a_b_json_str)
+    view_x_y.append(data['x']) 
+    view_x_y.append(data['y']) 
+    draw_view_canvas(ctx, view_x_y, canvas) 
+
+def save_data():
+    send_json = {target_char_str: ave_x_y}
+    send_to_python_script('save_data.py', json.dumps(send_json))
+
+def check(file_path): 
+    return os.path.exists(file_path) 
+
+def read_json(file_path): 
+    if check(file_path): 
+        with open(file_path, 'r', encoding='utf8') as f:
+            return f.read()
+    return ""
+
+def send_to_python_script(script,data):
+    if script == "save_data.py":
+        return save_data.main(data)
+    elif script == "plot.py":
+        return plot(data)
 
 
-# def draw_view_canvas(_ctx, _x_y, _canvas):
+
 
 
 
